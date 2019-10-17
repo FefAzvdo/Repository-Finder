@@ -1,176 +1,108 @@
-// Exercícios: Módulo 03
+import api from './api';
 
-// Todos os exercícios abaixo necessitam que você esteja com o plugin do Async/Await do Babel e o
-// babel-polyfill devidamente configurados. Em alguns exercícios é necessário instalar o Axios.
+class App {
+  constructor() {
+    this.repositories = [];
 
-// Exercício
+    this.formEl = document.getElementById('repo-form');
+    this.userInputEl = document.querySelector('input[name=user]')
+    this.repoInputEl = document.querySelector('input[name=repository]')
+    this.listEl = document.getElementById('repo-list');
 
-// Transforme os seguintes trechos de código utilizando async/await:
-
-// Função delay aciona o .then após 1s
-
-
-
-
-
-
-
-
-
-
-// const delay = () => new Promise(
-//   resolve => setTimeout(resolve, 1000)
-// );
-
-// function umPorSegundo() {
-//   delay()
-//       .then(() => {
-//       console.log('1s');
-//       delay()
-//            .then(() => {
-//           console.log('2s');
-//           delay()
-//                .then(() => {
-//              console.log('3s');
-//       });
-//     })
-//   });
-// }
-// umPorSegundo()
-
-// async function umPorSegundo() {
-//   await delay()
-//   console.log('1s');
-//   await delay()
-//   console.log('2s');
-//   await delay()
-//   console.log('3s');
-// }
-
-// umPorSegundo()
-
-
-
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import axios from 'axios';
-
-// function getUserFromGithub(user) {
-//   axios.get(`https://api.github.com/users/${user}`)
-//     .then(response => {
-//       console.log(response.data);
-//     })
-//     .catch(err => {
-//       console.log('Usuário não existe');
-//     })
-// }
-
-
-// getUserFromGithub('diego3g');
-// getUserFromGithub('diego3g124123');
-
-// class Api {
-//   static async getUserFromGithub(user) {
-//     try {
-//       const response = await axios.get(`https://api.github.com/users/${user}`)
-//       console.log(response.data);
-//     } catch (err) {
-//       console.warn('Erro na API')
-//     }
-//   }
-// }
-
-
-
-// Api.getUserFromGithub('diego3g');
-// Api.getUserFromGithub('diego3g124123');
-
-
-
-
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-// class Github {
-//   static getRepositories(repo) {
-//     axios.get(`https://api.github.com/repos/${repo}`)
-//       .then(response => {
-//         console.log(response.data);
-//       })
-//       .catch(err => {
-//         console.log('Repositório não existe');
-//       })
-//   }
-// }
-
-
-
-
-// class GitHub {
-//   static async getRepositories(repo) {
-//     try {
-//       const response = await axios.get(`https://api.github.com/repos/${repo}`)
-//       console.log(response.data)
-//     }
-//     catch{
-//       console.warn('ERRO NA API')
-//     }
-//   }
-// }
-
-// GitHub.getRepositories('rocketseat/rocketseat.com.br');
-// GitHub.getRepositories('rocketseat/dslkvmskv');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const buscaUsuario = async usuario => {
-  const response = await axios.get(`https://api.github.com/users/${usuario}`)
-  try {
-    console.log(response.data);
+    this.registerHandlers();
   }
-  catch{
-    console.log('Usuário não existe');
+
+  registerHandlers() {
+    this.formEl.onsubmit = event => this.addRepository(event)
   }
+
+  setLoading(loading = true) {
+    if (loading === true) {
+
+      let loadingEl = document.createElement('span');
+      loadingEl.appendChild(document.createTextNode('Carregando...'));
+      loadingEl.setAttribute('id', 'loading');
+
+      this.formEl.appendChild(loadingEl);
+
+    } else {
+
+      document.getElementById('loading').remove();
+
+    }
+  }
+
+
+
+  async addRepository(event) {
+    event.preventDefault();
+
+    const userInput = this.userInputEl.value;
+    const repoInput = this.repoInputEl.value;
+
+    if (repoInput.length === 0 || userInput.length === 0) {
+      return;
+    };
+
+
+
+    this.setLoading();
+
+    try {
+      const response = await api.get(`/${userInput}/${repoInput}`)
+
+      const { name, description, html_url, owner: { avatar_url } } = response.data
+
+      this.repositories.push({
+        name,
+        description,
+        avatar_url,
+        html_url,
+      })
+
+      this.userInputEl.value = ''
+      this.repoInputEl.value = ''
+
+      this.userInputEl.focus();
+
+
+      this.render();
+    }
+    catch (err) {
+      alert('O usuário ou reporitório estam incorretos!')
+    }
+
+    this.setLoading(false);
+  }
+
+  render() {
+    this.listEl.innerHTML = '';
+
+    this.repositories.forEach(repo => {
+      let imgEl = document.createElement('img');
+      imgEl.setAttribute('src', repo.avatar_url);
+
+      let titleEl = document.createElement('strong');
+      titleEl.appendChild(document.createTextNode(repo.name));
+
+      let descriptionEl = document.createElement('p');
+      descriptionEl.appendChild(document.createTextNode(repo.description));
+
+      let linkEl = document.createElement('a');
+      linkEl.setAttribute('target', 'blank');
+      linkEl.setAttribute('href', repo.html_url);
+      linkEl.appendChild(document.createTextNode('Acessar'));
+
+      let listItemEl = document.createElement('li');
+      listItemEl.appendChild(imgEl);
+      listItemEl.appendChild(titleEl);
+      listItemEl.appendChild(descriptionEl);
+      listItemEl.appendChild(linkEl);
+
+      this.listEl.appendChild(listItemEl);
+    })
+  }
+
 }
 
-buscaUsuario('diego3g');
-
+new App
